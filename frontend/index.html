@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OEFO — Copiloto académico</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="onboard-overlay" id="onboardOverlay">
+  <div class="onboard-card">
+    <h2 class="mt-0">Esto es OEFO</h2>
+    <p class="sub mb-14">Un copiloto para no perder el control del semestre, no otra lista de tareas.</p>
+    <ul class="onboard-list">
+      <li>📝 Le escribes en tu idioma lo que tienes — él lo entiende, lo clasifica y calcula el riesgo real.</li>
+      <li>🎯 Modo enfoque te dice en qué trabajar ahora mismo, no solo qué existe.</li>
+      <li>📊 Ve el peso real de tu nota en juego por materia, no solo "urgente/no urgente".</li>
+      <li>📅 Manda tus entregas a tu Google Calendar y te avisa desde el navegador.</li>
+    </ul>
+    <button id="onboardCerrar">Entendido, empecemos</button>
+  </div>
+</div>
+<div class="wrap">
+
+  <div class="card top">
+    <div>
+      <h1>OEFO</h1>
+      <p class="sub">Copiloto académico — entiende, predice y te acompaña</p>
+      <span class="pill" id="estadoConexion">⚪ Modo local</span>
+      <button class="ghost-btn only-editor mt-8" id="btnNotif">🔔 Activar avisos del navegador</button>
+    </div>
+    <div class="text-center">
+      <div class="gauge">
+        <svg width="76" height="76" viewBox="0 0 76 76">
+          <circle cx="38" cy="38" r="32" fill="none" stroke="var(--border)" stroke-width="8"/>
+          <circle id="gaugeArc" cx="38" cy="38" r="32" fill="none" stroke="var(--ok)" stroke-width="8" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="201"/>
+        </svg>
+        <div class="val" id="gaugeVal">0</div>
+      </div>
+      <div class="lbl">riesgo académico</div>
+    </div>
+  </div>
+
+  <div class="card banner" id="resumenDia"></div>
+
+  <div class="card stats">
+    <div class="stat"><div class="n" id="stPend">0</div><div class="l">pendientes</div></div>
+    <div class="stat"><div class="n" id="stAtras">0</div><div class="l">atrasadas</div></div>
+    <div class="stat"><div class="n" id="stRacha">0</div><div class="l">días de racha</div></div>
+  </div>
+
+  <div class="card only-editor">
+    <h2>Registrar tarea</h2>
+    <div class="assist">
+      <input id="entrada" type="text" placeholder="&quot;examen de cálculo el viernes, urgente&quot;">
+      <button id="btnAgregar">Analizar</button>
+    </div>
+    <p class="hint">OEFO interpreta fecha, materia, tipo y prioridad desde tu propio texto. <button class="linklike" id="toggleManual" type="button">¿Prefieres llenarlo campo por campo?</button></p>
+    <div class="toast" id="toast"></div>
+    <div class="manual-form" id="manualForm">
+      <div class="mf-row">
+        <input id="mf-nombre" type="text" placeholder="Nombre de la tarea">
+        <input id="mf-materia" list="mf-materias" type="text" placeholder="Materia">
+        <datalist id="mf-materias"></datalist>
+      </div>
+      <div class="mf-row">
+        <select id="mf-tipo"><option>Tarea</option><option>Trabajo</option><option>Examen</option></select>
+        <input id="mf-fecha" type="date">
+        <select id="mf-prioridad"><option value="normal">Normal</option><option value="alta">Alta</option></select>
+        <input id="mf-peso" type="number" min="0" max="100" placeholder="% de la nota">
+        <button id="mf-guardar">Guardar</button>
+      </div>
+      <p class="hint mt-0">El % de la nota es opcional, pero sirve para ver qué materia tiene más juego pendiente de verdad.</p>
+    </div>
+  </div>
+
+  <div class="card only-editor">
+    <h2>Pregúntale a OEFO</h2>
+    <div class="chip-row">
+      <span class="chip" data-q="¿qué tengo pendiente?">¿Qué tengo pendiente?</span>
+      <span class="chip" data-q="¿cuál es mi materia más riesgosa?">Materia más riesgosa</span>
+      <span class="chip" data-q="¿cómo voy esta semana?">¿Cómo voy esta semana?</span>
+      <span class="chip" data-q="¿qué me recomiendas hacer?">Recomiéndame algo</span>
+    </div>
+    <div class="chat" id="chat"></div>
+    <div class="assist">
+      <input id="pregunta" type="text" placeholder="Escríbele una pregunta a OEFO...">
+      <button id="btnPreguntar">Preguntar</button>
+    </div>
+  </div>
+
+  <div class="card only-editor">
+    <h2>Modo enfoque</h2>
+    <div class="focus">
+      <div class="focus-ring">
+        <svg width="96" height="96" viewBox="0 0 96 96">
+          <circle cx="48" cy="48" r="40" fill="none" stroke="var(--border)" stroke-width="8"/>
+          <circle id="focusArc" cx="48" cy="48" r="40" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="0"/>
+        </svg>
+        <div class="t" id="focusTime">25:00</div>
+      </div>
+      <div class="focus-info">
+        <div class="sub">Enfócate en:</div>
+        <div class="task" id="focusTask">Nada pendiente por ahora</div>
+        <div class="focus-controls">
+          <button class="primary" id="focusStart">Iniciar 25 min</button>
+          <button id="focusPause">Pausar</button>
+          <button id="focusReset">Reiniciar</button>
+        </div>
+        <div class="focus-done" id="focusDone">
+          🎉 ¡Sesión completada! ¿Avanzaste en esa tarea?
+          <div><button class="ghost-btn" id="focusComplete">Marcar como completada</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>Plan recomendado de la semana</h2>
+      <div class="btn-group">
+        <button class="ghost-btn only-editor" id="btnCompartir">Copiar plan</button>
+        <button class="ghost-btn only-editor" id="btnCompartirVista">🔗 Compartir vista</button>
+      </div>
+    </div>
+    <div class="week" id="week"></div>
+  </div>
+
+  <div class="card">
+    <h2>Mapa de carga del mes</h2>
+    <div class="month-grid" id="monthGrid"></div>
+    <div class="month-legend">
+      <span class="sw sw-libre"></span> sin carga
+      <span class="sw sw-media"></span> carga media
+      <span class="sw sw-alta"></span> carga alta
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Riesgo por materia</h2>
+    <div id="materias"></div>
+  </div>
+
+  <div class="card">
+    <h2>Logros</h2>
+    <div class="badges" id="logros"></div>
+  </div>
+
+  <div class="card only-editor">
+    <div class="card-head">
+      <h2>Copia de seguridad</h2>
+      <button class="ghost-btn" id="btnExportar">Exportar</button>
+    </div>
+    <p class="hint">Tus datos viven solo en este navegador. Exporta una copia antes de cambiar de equipo o borrar el caché, y pégala aquí para restaurarla.</p>
+    <div class="mf-row">
+      <textarea id="importText" placeholder="Pega aquí tu copia de seguridad (JSON) para restaurarla..." rows="2"></textarea>
+      <button id="btnImportar">Importar</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button data-f="pendientes" class="active">Pendientes</button>
+      <button data-f="completadas">Completadas</button>
+      <button data-f="todas">Todas</button>
+    </div>
+    <ul id="lista"></ul>
+  </div>
+
+  <div class="card footnote">
+    <strong>Dónde está la inteligencia:</strong> clasifica (texto libre → tipo/materia/prioridad/peso, incluso varias tareas en un solo mensaje), predice (riesgo por tarea, por materia, global y proyectado en el mapa del mes), recomienda (plan semanal y próxima acción del modo enfoque), interpreta (asistente conversacional), detecta (atrasos y acumulación de urgencias). Se integra con herramientas reales: exporta cada entrega a Google Calendar y avisa por notificación del navegador.
+    <strong>Automatización pura (sin IA):</strong> el conteo de días, el orden de la lista y el guardado de datos.
+  </div>
+</div>
+
+<!-- Scripts clásicos (no módulos) para que la página también funcione abierta con doble clic.
+     El orden importa: comparten variables globales y main.js va al final. -->
+<script src="js/estado.js"></script>
+<script src="js/servidor.js"></script>
+<script src="js/almacenamiento.js"></script>
+<script src="js/utilidades.js"></script>
+<script src="js/interpretacion.js"></script>
+<script src="js/riesgo.js"></script>
+<script src="js/asistente.js"></script>
+<script src="js/render.js"></script>
+<script src="js/acciones.js"></script>
+<script src="js/enfoque.js"></script>
+<script src="js/compartir.js"></script>
+<script src="js/notificaciones.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
